@@ -1,0 +1,57 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>CSS JS Charts</title>
+<script type="text/javascript" src="cssJsCharts.js"></script>
+<script type="text/javascript">
+	window.addEventListener('load', function () {
+
+		var opt = {
+				"options": {
+		            "legend": false,
+		            "gradient": true,
+					"radius": 150
+		        },
+		        "parts": [
+					{
+						"title": "piece1",
+						"description": "descr",
+						"percent": 10
+					},
+					{
+						"title": "piece2",
+						"description": "descr",
+						"percent": 10
+					},
+					{
+						"title": "piece3",
+						"description": "descr",
+						"percent": 60
+					},
+					{
+						"title": "piece4",
+						"description": "descr",
+						"percent": 10
+					},
+					{
+						"title": "piece5",
+						"description": "descr",
+						"percent": 10
+					}
+
+				]
+			};
+
+		var charts = new Charts(document.querySelector("#generated-chart"), opt);
+			charts.buildChart();
+	});
+</script>
+
+</head>
+<body>
+
+<div id="generated-chart" style="height: 300px; margin-left: 100px;"></div>
+
+</body>
+</html>
