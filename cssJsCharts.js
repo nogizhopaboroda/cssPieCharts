@@ -22,16 +22,33 @@
 
         this.transformStyleNames = ['mozTransform', 'webkitTransform', 'oTransform', 'transform'];
         this.gradientPropertyNames = ['-webkit-radial-gradient', '-moz-radial-gradient', '-o-radial-gradient', '-ms-radial-gradient']
+        this.boxShadowPropertyNames = ['webkitBoxShadow', 'mozBoxShadow', 'boxShadow'];
 
     };
 
     window.Charts.prototype.buildChart = function () {
-        var chartContainer = document.createElement("div");
-            chartContainer.classList.add("chart");
-            chartContainer.style.position = "relative";
+
+        var self = this;
+
+        if(document.styleSheets.length == 0) {
+            document.getElementsByTagName('head')[0].appendChild(document.createElement('style'));
+        }
 
         var radius = this.options.radius || this.standartSettings.radius;
         var widthHeight = (radius * 2).toString();
+
+        var chartContainer = document.createElement("div");
+            chartContainer.classList.add("chart");
+            chartContainer.style.position = "relative";
+            chartContainer.style.width = widthHeight + "px";
+            chartContainer.style.height = widthHeight + "px";
+            chartContainer.style.borderRadius = radius + "px";
+
+        if(this.options.shadow) {
+            for(var i = 0; i < this.boxShadowPropertyNames.length; i++){
+                chartContainer.style[this.boxShadowPropertyNames[i]] = "0px 0px 10px 1px #000000";
+            }
+        }
 
         var lastDegree = 0;
 
@@ -40,10 +57,15 @@
             part.color = part.color || this.standartSettings.colors.shift();
 
             /* если кусок больше 50%, разбиваем на 50 и остаток */
-            if(part.percent > 50) {
+            /*if(part.percent > 50) {
                 part.remainder = part.percent - 50;
                 part.percent = 50;
                 part.gt50 = true;
+            }*/
+            if(part.percent > 25) {
+                part.remainders = part.percent - 25;
+                part.percent = 25;
+                part.gt25 = true;
             }
 
             var degree = lastDegree;  //угол поворота держателя
@@ -61,10 +83,29 @@
             var piece = document.createElement("div");
                 piece.classList.add("piece");
                 piece.classList.add("piece-" + i);
+                piece.setAttribute("number", i);
 
             /**/
             piece.addEventListener('click', function (event) {
-                console.log(event.target);
+                var neighbourPieces = self.getSector(event.target);
+                console.log(neighbourPieces);
+            });
+
+            piece.addEventListener('mouseover', function (event) {
+                var neighbourPieces = self.getSector(event.target);
+                for(var z = 0; z < neighbourPieces.length; z++) {
+                    for(var x = 0; x < self.boxShadowPropertyNames.length; x++){
+                        neighbourPieces[z].style[self.boxShadowPropertyNames[x]] = "inset 0px 0px " + widthHeight + "px 0px white";
+                    }
+                }
+            });
+            piece.addEventListener('mouseout', function (event) {
+                var neighbourPieces = self.getSector(event.target);
+                for(var z = 0; z < neighbourPieces.length; z++) {
+                    for(var x = 0; x < self.boxShadowPropertyNames.length; x++){
+                        neighbourPieces[z].style[self.boxShadowPropertyNames[x]] = "none";
+                    }
+                }
             });
             /**/
 
@@ -75,11 +116,11 @@
             }
             pieceHolder.style.width = widthHeight + "px";
             pieceHolder.style.height = widthHeight + "px";
-            pieceHolder.style.clip = "rect(0px," + widthHeight + "px, " + widthHeight + "px, " + radius + "px)";
+            pieceHolder.style.clip = "rect(0px," + widthHeight + "px, " + radius + "px, " + radius + "px)";
             pieceHolder.style.position = "absolute";
             piece.style.width = widthHeight + "px";
             piece.style.height = widthHeight + "px";
-            piece.style.clip = "rect(0px," + radius + "px, " + widthHeight + "px, 0px)";
+            piece.style.clip = "rect(0px," + radius + "px, " + radius + "px, 0px)";
             piece.style.position = "absolute";
             piece.style.borderRadius = radius + "px";
 
@@ -93,9 +134,6 @@
                 for(var m = 0; m < this.gradientPropertyNames.length; m++){
                     _gradientProperty += "background: " + this.gradientPropertyNames[m] + "(center, ellipse cover, " + disp[1].toStyleProperty() + " 10%, " + disp[0].toStyleProperty() + " 100%); ";
                 }
-                if(document.styleSheets.length == 0) {
-                    document.getElementsByTagName('head')[0].appendChild(document.createElement('style'));
-                }
                 if (document.styleSheets[0].addRule) {
                     document.styleSheets[0].addRule(".piece-" + i, _gradientProperty, document.styleSheets[0].cssRules.length);
                 } else document.styleSheets[0].insertRule(".piece-" + i + " { " +  _gradientProperty + "}", document.styleSheets[0].cssRules.length);
@@ -105,14 +143,14 @@
             pieceHolder.appendChild(piece); //сборка полного блока кусочка
 
             /* второй кусочек, если процент > 50 */
-            if(part.gt50) {
+           /* if(part.gt50) {
                 var _degree = lastDegree;
                 var _pieceDegree = 360 * (part.remainder / 100); //угол поворота кусочка
 
                 lastDegree += _pieceDegree;
                 var pieceHolderCloned = pieceHolder.cloneNode();
                 var pieceCloned = piece.cloneNode();
-                //pieceHolder.style.clip = "rect(0px," + widthHeight + "px, " + widthHeight + "px, " + radius + "px)";
+                pieceHolder.style.clip = "rect(0px," + widthHeight + "px, " + widthHeight + "px, " + radius + "px)";
                 for(var k = 0; k < this.transformStyleNames.length; k++) {
                     pieceHolderCloned.style[this.transformStyleNames[k]] = "rotate(" + _degree + "deg)";
                     pieceCloned.style[this.transformStyleNames[k]] = "rotate(" + _pieceDegree + "deg)";
@@ -124,9 +162,38 @@
 
                 pieceHolderCloned.appendChild(pieceCloned);
                 chartContainer.appendChild(pieceHolderCloned);
-            }
-
+            }*/
             chartContainer.appendChild(pieceHolder);
+
+            if(part.gt25) {
+
+                for(var q = 0; q < Math.ceil(part.remainders / 25); q++) {
+                    var _degree = lastDegree;
+                    var __d = 25;
+                    if(part.remainders - (q * 25) < 25) {
+                        __d = part.remainders - (q * 25);
+                    }
+                    var _pieceDegree = 360 * (__d / 100); //угол поворота кусочка
+
+                    lastDegree += _pieceDegree;
+                    var pieceHolderCloned = pieceHolder.cloneNode();
+                    var pieceCloned = piece.cloneNode();
+                    for(var k = 0; k < this.transformStyleNames.length; k++) {
+                        pieceHolderCloned.style[this.transformStyleNames[k]] = "rotate(" + _degree + "deg)";
+                        pieceCloned.style[this.transformStyleNames[k]] = "rotate(" + _pieceDegree + "deg)";
+                    }
+
+                    //маркируем куски
+                    pieceHolder.classList.add("piece-holder-" + i);
+                    pieceHolderCloned.classList.add("piece-holder-" + i);
+
+                    if(!pieceHolderCloned.hasChildNodes()) {
+                        pieceHolderCloned.appendChild(pieceCloned);
+                    }
+
+                    chartContainer.appendChild(pieceHolderCloned);
+                }
+            }
             this.container.appendChild(chartContainer);
         }
     };
@@ -187,6 +254,18 @@
                 }
             });
         }
+    };
+
+    window.Charts.prototype.getSector = function (sender) {
+        var _pieceNumber = sender.getAttribute("number");
+        var _holders = this.container.querySelectorAll(".piece-holder-" + _pieceNumber);
+        var _pieces = [];
+        if(_holders.length) {
+            for(var i = 0; i < _holders.length; i++) {
+                _pieces.push(_holders[i].querySelector(".piece"));
+            }
+            return _pieces;
+        } else return [sender];
     };
 
 })(window);
